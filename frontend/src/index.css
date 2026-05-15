@@ -1,0 +1,9 @@
+body {
+  margin: 0;
+  background: #f2f4f7;
+  color: #121212;
+}
+
+* {
+  box-sizing: border-box;
+}

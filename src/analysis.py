@@ -171,17 +171,44 @@ def _compute_technical_signals(ticker: str) -> Dict[str, Any]:
 
 def analyze_inflection(ticker: str, filing_limit: int = 4) -> Dict[str, Any]:
     ticker = ticker.upper()
-    stock = yf.Ticker(ticker)
-    info = getattr(stock, "info", {}) or {}
-    history = stock.history(period="1mo")
+    try:
+        stock = yf.Ticker(ticker)
+        info = getattr(stock, "info", {}) or {}
+        history = stock.history(period="1mo")
 
-    price = float(history["Close"].iloc[-1]) if not history.empty else 0.0
-    revenue = float(info.get("totalRevenue") or 0.0)
-    market_cap = float(info.get("marketCap") or 0.0)
-    ps_ratio = float(info.get("priceToSalesTrailing12Months") or 0.0)
-    peg_metric = float(info.get("pegRatio") or info.get("forwardPEG") or 0.0)
+        price = float(history["Close"].iloc[-1]) if not history.empty else 0.0
+        revenue = float(info.get("totalRevenue") or 0.0)
+        market_cap = float(info.get("marketCap") or 0.0)
+        ps_ratio = float(info.get("priceToSalesTrailing12Months") or 0.0)
+        peg_metric = float(info.get("pegRatio") or info.get("forwardPEG") or 0.0)
+    except Exception as e:
+        print(f"Error fetching yfinance data for {ticker}: {e}")
+        # Return a safe default response
+        return {
+            "company_ticker": ticker,
+            "latest_filing_date": None,
+            "price": 0.0,
+            "sales_multiple": None,
+            "peg": None,
+            "narrative_shift": False,
+            "cheap_on_sales": False,
+            "multi_theme_exposure": False,
+            "ecosystem_halo": False,
+            "peg_value": False,
+            "technical_confirmed": False,
+            "score": 0,
+            "theme_tags": [],
+            "highlights": [f"Unable to fetch data for {ticker}"],
+            "latest_filings": [],
+            "summary": f"Data unavailable for {ticker}",
+        }
 
-    filings = scrape_sec_filings(ticker, limit=filing_limit)
+    try:
+        filings = scrape_sec_filings(ticker, limit=filing_limit)
+    except Exception as e:
+        print(f"Error scraping SEC filings for {ticker}: {e}")
+        filings = []
+
     filing_descriptions = [f"{f['type']} {f['date']}" for f in filings]
     combined_text = " ".join([f["text"] for f in filings])
     theme_tags = _match_themes(combined_text)

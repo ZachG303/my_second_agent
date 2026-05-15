@@ -24,6 +24,8 @@ async def get_inflection_insights(
         try:
             insights.append(get_recent_inflection_insights(ticker, limit=limit))
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"{ticker}: {exc}")
+            print(f"Error analyzing {ticker}: {exc}")
+            # Skip failed tickers instead of failing the entire request
+            continue
 
     return insights
